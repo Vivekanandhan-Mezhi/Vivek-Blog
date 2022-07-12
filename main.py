@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, flash, abort, request
+from flask_mail import Mail, Message
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
 from datetime import date, datetime
@@ -14,14 +15,23 @@ import smtplib
 
 
 my_gmail = "mailforpythoncodin@gmail.com"
-pswd_gmail = os.environ.get("pswd_gmail")
+pswd_gmail = os.environ.get("pswd_gmail")            # "xhpymnwjxlvnzurh"
 gmail_smtp = "smtp.gmail.com"
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
+app.config["MAIL_SERVER"] = gmail_smtp
+app.config["MAIL_PORT"] = 465
+app.config["MAIL_USE_SSL"] = True
+app.config["MAIL_USERNAME"] = my_gmail
+app.config["MAIL_PASSWORD"] = pswd_gmail
+app.config["MAIL_DEFAULT_SENDER"] = my_gmail
 ckeditor = CKEditor(app)
 Bootstrap(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+mail = Mail(app)
 gravatar = Gravatar(app,
                     size=100,
                     rating='g',
@@ -190,14 +200,16 @@ def contact():
 
 
 def send_email(name, email, phone, message):
+
     email_message = f"Subject:New Message\n\nName: {name}\nEmail: {email}\nPhone: {phone}\nMessage: {message}"
-    with smtplib.SMTP(host=gmail_smtp, port=587) as connection:
-        connection.starttls()
-        connection.login(user=my_gmail, password=pswd_gmail)
-        connection.sendmail(from_addr=my_gmail,
-                            to_addrs=my_gmail,
-                            msg=email_message)
-    return render_template("contact.html", current_user=current_user, year=CURRENT_YEAR)
+    # with smtplib.SMTP(host=gmail_smtp, port=587) as connection:
+    #     connection.starttls()
+    #     connection.login(user=my_gmail, password=pswd_gmail)
+    #     connection.sendmail(from_addr=my_gmail,
+    #                         to_addrs=my_gmail,
+    #                         msg=email_message)
+    msg = Message(subject="Portfolio Contact", body=email_message, recipients=[my_gmail])
+    mail.send(msg)
 
 
 @app.route("/new-post", methods=["GET", "POST"])
