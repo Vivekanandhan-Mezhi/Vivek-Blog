@@ -1,9 +1,7 @@
-import datetime
-
-from flask import Flask, render_template, redirect, url_for, flash, abort
+from flask import Flask, render_template, redirect, url_for, flash, abort, request
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
-from datetime import date
+from datetime import date, datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
@@ -12,8 +10,12 @@ from forms import CreatePostForm, RegistrationForm, LoginForm, CommentForm
 from flask_gravatar import Gravatar
 from functools import wraps
 import os
+import smtplib
 
 
+my_gmail = "mailforpythoncodin@gmail.com"
+pswd_gmail = os.environ.get("pswd_gmail")
+gmail_smtp = "smtp.gmail.com"
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 ckeditor = CKEditor(app)
@@ -33,7 +35,7 @@ gravatar = Gravatar(app,
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-CURRENT_YEAR = datetime.datetime.now().year
+CURRENT_YEAR = datetime.now().year
 
 
 ## CONFIGURE TABLES
@@ -177,8 +179,24 @@ def about():
     return render_template("about.html", current_user=current_user, year=CURRENT_YEAR)
 
 
-@app.route("/contact")
+@app.route("/contact", methods=["GET", "POST"])
 def contact():
+    data = []
+    if request.method == "POST":
+        data = request.form
+        send_email(data["name"], data["email"], data["phone"], data["message"])
+        return render_template("contact.html", msg_sent=True)
+    return render_template('contact.html', msg_sent=False)
+
+
+def send_email(name, email, phone, message):
+    email_message = f"Subject:New Message\n\nName: {name}\nEmail: {email}\nPhone: {phone}\nMessage: {message}"
+    with smtplib.SMTP(host=gmail_smtp, port=587) as connection:
+        connection.starttls()
+        connection.login(user=my_gmail, password=pswd_gmail)
+        connection.sendmail(from_addr=my_gmail,
+                            to_addrs=my_gmail,
+                            msg=email_message)
     return render_template("contact.html", current_user=current_user, year=CURRENT_YEAR)
 
 
