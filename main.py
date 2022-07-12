@@ -1,3 +1,5 @@
+import datetime
+
 from flask import Flask, render_template, redirect, url_for, flash, abort
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
@@ -31,6 +33,7 @@ gravatar = Gravatar(app,
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+CURRENT_YEAR = datetime.datetime.now().year
 
 
 ## CONFIGURE TABLES
@@ -91,7 +94,7 @@ def load_user(user_id):
 @app.route('/')
 def get_all_posts():
     posts = BlogPost.query.all()
-    return render_template("index.html", all_posts=posts, current_user=current_user)
+    return render_template("index.html", all_posts=posts, current_user=current_user, year=CURRENT_YEAR)
 
 
 @app.route('/register', methods=["GET", "POST"])
@@ -119,7 +122,7 @@ def register():
         login_user(new_user)
 
         return redirect(url_for("get_all_posts"))
-    return render_template("register.html", form=form, current_user=current_user)
+    return render_template("register.html", form=form, current_user=current_user, year=CURRENT_YEAR)
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -139,7 +142,7 @@ def login():
         login_user(user)
         return redirect(url_for("get_all_posts"))
 
-    return render_template("login.html", form=form, current_user=current_user)
+    return render_template("login.html", form=form, current_user=current_user, year=CURRENT_YEAR)
 
 
 @app.route('/logout')
@@ -166,17 +169,17 @@ def show_post(post_id):
         )
         db.session.add(new_comment)
         db.session.commit()
-    return render_template("post.html", post=requested_post, current_user=current_user, form=form)
+    return render_template("post.html", post=requested_post, current_user=current_user, form=form, year=CURRENT_YEAR)
 
 
 @app.route("/about")
 def about():
-    return render_template("about.html", current_user=current_user)
+    return render_template("about.html", current_user=current_user, year=CURRENT_YEAR)
 
 
 @app.route("/contact")
 def contact():
-    return render_template("contact.html", current_user=current_user)
+    return render_template("contact.html", current_user=current_user, year=CURRENT_YEAR)
 
 
 @app.route("/new-post", methods=["GET", "POST"])
@@ -195,7 +198,7 @@ def add_new_post():
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for("get_all_posts"))
-    return render_template("make-post.html", form=form, current_user=current_user)
+    return render_template("make-post.html", form=form, current_user=current_user, year=CURRENT_YEAR)
 
 
 @app.route("/edit-post/<int:post_id>", methods=["GET", "POST"])
@@ -217,7 +220,7 @@ def edit_post(post_id):
         db.session.commit()
         return redirect(url_for("show_post", post_id=post.id))
 
-    return render_template("make-post.html", form=edit_form, current_user=current_user)
+    return render_template("make-post.html", form=edit_form, current_user=current_user, year=CURRENT_YEAR)
 
 
 @app.route("/delete/<int:post_id>")
